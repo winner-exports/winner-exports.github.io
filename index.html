@@ -1,0 +1,1152 @@
+<!DOCTYPE html>
+<html lang="en-IN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Imports/Exports Tracker - Firebase</title>
+    <!-- Ionicons -->
+    <script type="module" src="https://cdn.jsdelivr.net/npm/@ionic/core/dist/ionic/ionic.esm.js"></script>
+    <script nomodule src="https://cdn.jsdelivr.net/npm/@ionic/core/dist/ionic/ionic.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@ionic/core/css/ionic.bundle.css"/>
+
+    <style>
+        :root {
+            --bg-color: #f0f2f5;
+            --sidebar-bg: #e3e6e8; /* Lighter sidebar */
+            --card-bg: #ffffff;
+            --text-color: #1c1c1c;
+            --text-muted: #606060;
+            --primary-color: #0078d4;
+            --primary-hover: #005a9e;
+            --border-color: #d8d8d8; /* Slightly lighter border */
+            --border-radius: 8px; /* More rounded */
+            --shadow: 0 2px 5px rgba(0, 0, 0, 0.08), 0 1px 2px rgba(0, 0, 0, 0.05);
+            --red-color: #d83b01;
+            --red-hover: #a22f01;
+            --green-color: #107c10;
+            --yellow-color: #fccf00;
+            --font-family: 'Segoe UI Variable', 'Segoe UI', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: var(--font-family);
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            display: flex;
+            min-height: 100vh;
+            font-size: 14px; /* Base font size */
+        }
+
+        /* --- Layout --- */
+        .app-container {
+            display: flex;
+            width: 100%;
+        }
+
+        .sidebar {
+            width: 60px; /* Initial collapsed width */
+            background-color: var(--sidebar-bg);
+            padding: 15px 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            transition: width 0.3s ease;
+            overflow: hidden; /* Hide text when collapsed */
+            flex-shrink: 0; /* Prevent shrinking */
+             border-right: 1px solid var(--border-color);
+        }
+
+        .sidebar:hover {
+             width: 220px; /* Expanded width */
+        }
+
+        .sidebar-logo {
+            color: var(--primary-color);
+            font-size: 2em;
+            margin-bottom: 30px;
+            padding: 0 10px; /* Center icon when collapsed */
+             width: 100%;
+             text-align: center;
+        }
+         .sidebar:hover .sidebar-logo {
+             text-align: left;
+             padding-left: 18px;
+         }
+
+
+        .nav-item {
+            display: flex;
+            align-items: center;
+            width: calc(100% - 16px); /* Account for margin */
+            padding: 12px 18px; /* Adjust padding */
+            color: var(--text-color);
+            text-decoration: none;
+            white-space: nowrap; /* Prevent text wrapping */
+            cursor: pointer;
+            border-radius: var(--border-radius);
+             margin: 2px 8px; /* Margin around items */
+             transition: background-color 0.2s ease, color 0.2s ease;
+        }
+
+        .nav-item ion-icon {
+            font-size: 1.5em;
+            margin-right: 15px; /* Space between icon and text */
+            min-width: 24px; /* Ensure icon alignment */
+            text-align: center;
+             flex-shrink: 0; /* Prevent icon shrinking */
+        }
+
+        .nav-item .nav-text {
+            opacity: 0; /* Hidden when collapsed */
+            transition: opacity 0.2s ease 0.1s; /* Delay text fade-in */
+            font-weight: 500;
+        }
+
+        .sidebar:hover .nav-item .nav-text {
+            opacity: 1;
+        }
+
+        .nav-item.active, .nav-item:hover {
+            background-color: rgba(0, 120, 212, 0.1); /* Light blue background */
+            color: var(--primary-color);
+        }
+        .nav-item.active {
+             font-weight: 600;
+        }
+
+
+        .main-content {
+            flex-grow: 1;
+            padding: 25px 30px;
+            overflow-y: auto; /* Allow content scrolling */
+            height: 100vh;
+        }
+
+        /* --- View Containers --- */
+        .view-container {
+            display: none; /* Hide views by default */
+        }
+        .view-container.active-view {
+            display: block; /* Show the active view */
+        }
+
+        /* --- Card/Section Styling --- */
+         .section {
+            background-color: var(--card-bg);
+            padding: 20px 25px;
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow);
+            margin-bottom: 25px;
+            border: 1px solid var(--border-color);
+        }
+
+         .section h2 {
+            font-size: 1.3em;
+            font-weight: 600;
+            margin-bottom: 20px;
+            color: var(--text-color);
+             border-bottom: 1px solid #eee;
+             padding-bottom: 10px;
+             display: flex;
+             align-items: center;
+             gap: 8px;
+        }
+         .section h2 ion-icon {
+             font-size: 1.2em; /* Icon size in headings */
+         }
+
+        /* --- Form Styling --- */
+        #entry-form, .category-management-form { /* Renamed for clarity */
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 15px 20px;
+        }
+         .form-group-full {
+            grid-column: 1 / -1;
+            text-align: right;
+            margin-top: 10px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 6px;
+            font-weight: 500;
+            font-size: 0.9em;
+            color: var(--text-muted);
+        }
+
+        input[type="text"],
+        input[type="number"],
+        input[type="date"],
+        select {
+            width: 100%;
+            padding: 9px 12px;
+            border: 1px solid var(--border-color);
+            border-radius: calc(var(--border-radius) / 2); /* Slightly less rounded */
+            font-size: 0.95em;
+            transition: border-color 0.2s ease, box-shadow 0.2s ease;
+            background-color: #fff; /* Ensure background for inputs */
+             color: var(--text-color); /* Ensure text color for inputs */
+        }
+        input:focus, select:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 2px rgba(0, 120, 212, 0.3);
+        }
+        /* Style disabled state */
+        select:disabled, input:disabled {
+            background-color: #f8f8f8;
+            cursor: not-allowed;
+            opacity: 0.7;
+        }
+
+
+        button {
+            padding: 9px 18px;
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: calc(var(--border-radius) / 2);
+            cursor: pointer;
+            font-size: 0.95em;
+            font-weight: 500;
+            transition: background-color 0.2s ease;
+            display: inline-flex; /* Align icon and text */
+            align-items: center;
+            gap: 8px;
+        }
+         button ion-icon {
+             font-size: 1.2em; /* Adjust icon size in buttons */
+         }
+
+        button:hover { background-color: var(--primary-hover); }
+        button.secondary { background-color: #e1e1e1; color: var(--text-color); }
+        button.secondary:hover { background-color: #cacaca; }
+        button.danger { background-color: var(--red-color); }
+        button.danger:hover { background-color: var(--red-hover); }
+        button.small { padding: 5px 10px; font-size: 0.85em; gap: 4px; }
+        button:disabled { background-color: #ccc; cursor: not-allowed; }
+
+
+        /* --- Category Management Specific --- */
+        .category-management-form { /* Using the new class */
+             align-items: flex-end; /* Align items to bottom for button alignment */
+             grid-template-columns: 1fr; /* Stack groups vertically */
+             gap: 20px; /* Space between add and remove groups */
+        }
+        .category-actions-group { /* Wrapper for each action group */
+            display: flex;
+            flex-wrap: wrap; /* Allow wrapping on small screens */
+            align-items: flex-end;
+            gap: 10px;
+        }
+        .category-actions-group > div { /* Label/input group */
+            flex-grow: 1; /* Allow input group to grow */
+            min-width: 150px; /* Minimum width before wrapping */
+        }
+        .category-actions-group button {
+             flex-shrink: 0; /* Prevent button shrinking */
+        }
+
+
+        /* --- Table Styling --- */
+         .table-container {
+             overflow-x: auto;
+        }
+        #entries-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+            font-size: 0.9em;
+        }
+        #entries-table th, #entries-table td {
+            border-bottom: 1px solid #eee; /* Lighter lines */
+            padding: 12px 10px;
+            text-align: left;
+            vertical-align: middle;
+            white-space: nowrap;
+        }
+        #entries-table th {
+            background-color: #f9f9f9;
+            font-weight: 600;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            font-size: 0.85em;
+            letter-spacing: 0.5px;
+        }
+        #entries-table tr:hover { background-color: #f5faff; }
+
+        /* Consistent styling for count controls and sold controls */
+        .count-controls, .sold-controls {
+            display: flex;
+            align-items: center;
+            gap: 6px; /* Consistent gap */
+            justify-content: center; /* Center content within the cell */
+             min-height: 34px; /* Match button height approx. */
+        }
+        .count-controls button {
+            min-width: 28px;
+            padding: 5px; /* Adjust padding for small buttons */
+            line-height: 1; /* Ensure icon is centered vertically */
+        }
+        .count-controls span {
+            min-width: 25px; /* Give the count number some space */
+            text-align: center;
+             font-weight: 500;
+        }
+
+        .sold-count-input {
+            width: 65px; /* Keep defined width */
+            padding: 6px 8px; /* Adjust padding slightly if needed */
+            text-align: center;
+            font-size: 0.95em; /* Match other inputs */
+            border: 1px solid var(--border-color);
+            border-radius: calc(var(--border-radius) / 2);
+            transition: border-color 0.2s ease, box-shadow 0.2s ease;
+            -moz-appearance: textfield; /* Hide spinners Firefox */
+        }
+         .sold-count-input:focus {
+             outline: none;
+             border-color: var(--primary-color);
+             box-shadow: 0 0 0 2px rgba(0, 120, 212, 0.3);
+         }
+
+        input[type=number]::-webkit-inner-spin-button,
+        input[type=number]::-webkit-outer-spin-button {
+            -webkit-appearance: none;
+            margin: 0; /* Hide spinners Chrome/Safari */
+        }
+
+         /* Style for N/A text in sold controls */
+         .sold-controls .na-text {
+             color: var(--text-muted);
+             font-style: italic;
+             font-size: 0.9em;
+         }
+
+
+        /* Hide sold controls elements for expense rows */
+        .expense-row .sold-controls .sold-count-input { display: none; }
+        .expense-row .sold-controls .na-text { display: inline; } /* Show N/A text */
+        .income-row .sold-controls .na-text { display: none; } /* Hide N/A text for income */
+
+        .action-buttons {
+             text-align: right; /* Align buttons to the right */
+         }
+        .action-buttons button {
+            margin-left: 5px;
+            }
+
+
+        /* --- Statistics Styling --- */
+        #statistics {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+            gap: 15px;
+        }
+        .stat-card {
+            background-color: var(--card-bg);
+            padding: 18px 15px;
+            border-radius: var(--border-radius);
+            border: 1px solid var(--border-color);
+            box-shadow: var(--shadow);
+            text-align: center;
+            transition: transform 0.2s ease, border-color 0.2s ease; /* Add border transition */
+        }
+        .stat-card:hover {
+             transform: translateY(-3px);
+        }
+        .stat-card h3 {
+            margin: 0 0 8px 0;
+            color: var(--text-muted);
+            font-size: 0.8em;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .stat-card p {
+            margin: 0;
+            font-size: 1.5em;
+            font-weight: 600;
+            line-height: 1.2;
+        }
+        #total-income p { color: var(--green-color); }
+        #total-expenses p { color: var(--red-color); }
+        #profit-loss p { color: var(--text-color); } /* Default color set by JS */
+        #sold-value p { color: var(--primary-color); }
+        #unsold-value p { color: #e87500; }
+        #total-items p, #total-sold-items p {color: var(--text-muted); }
+
+         /* --- Responsive Adjustments --- */
+        @media (max-width: 992px) {
+             .sidebar { width: 60px; } /* Keep sidebar collapsed */
+             .sidebar:hover { width: 60px; } /* Disable hover expand */
+             .sidebar:hover .nav-item .nav-text { opacity: 0; } /* Keep text hidden */
+              .sidebar:hover .sidebar-logo { text-align: center; padding: 0 10px;} /* Center logo */
+             .main-content { padding: 20px; }
+             #entry-form, .category-management-form { grid-template-columns: 1fr 1fr; }
+             #statistics { grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); }
+             .stat-card p { font-size: 1.3em; }
+             .category-management-form { grid-template-columns: 1fr; } /* Stack groups */
+        }
+         @media (max-width: 768px) {
+            body { font-size: 13px; }
+             .main-content { padding: 15px; }
+             .section { padding: 15px 20px;}
+             .section h2 { font-size: 1.2em; margin-bottom: 15px; }
+             #entry-form, .category-management-form { grid-template-columns: 1fr; } /* Stack form elements */
+             .category-actions-group { flex-direction: column; align-items: stretch; gap: 10px; } /* Stack elements within group */
+             .category-actions-group button { width: 100%; } /* Full width buttons */
+             #statistics { grid-template-columns: 1fr 1fr; } /* Two columns for stats */
+             .stat-card p { font-size: 1.2em; }
+             #entries-table { font-size: 0.85em; }
+              #entries-table th, #entries-table td { padding: 10px 8px; } /* Adjust padding */
+        }
+         @media (max-width: 480px) {
+             .sidebar { display: none; } /* Hide sidebar completely */
+             .main-content { padding: 10px; }
+             #statistics { grid-template-columns: 1fr; } /* Single column stats */
+             button { padding: 8px 14px; font-size: 0.9em; }
+             button.small { padding: 4px 8px; }
+             label { font-size: 0.85em; }
+             input, select { padding: 8px 10px; font-size: 0.9em; }
+             .count-controls, .sold-controls { gap: 4px; } /* Reduce gap */
+             .sold-count-input { width: 55px; } /* Slightly smaller input */
+             #entries-table th, #entries-table td { white-space: normal; } /* Allow wrapping */
+        }
+
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <aside class="sidebar">
+             <div class="sidebar-logo">
+                 <ion-icon name="storefront-outline"></ion-icon>
+             </div>
+             <!-- Add 'active' class to current view link -->
+             <!-- Add data-view attribute matching the view container ID -->
+             <a href="#" class="nav-item active" id="dashboard-link" data-view="dashboard-view">
+                <ion-icon name="home-outline"></ion-icon>
+                <span class="nav-text">Dashboard</span>
+            </a>
+             <a href="#" class="nav-item" id="entries-link" data-view="entries-view">
+                <ion-icon name="list-outline"></ion-icon>
+                <span class="nav-text">Entries</span>
+            </a>
+            <a href="#" class="nav-item" id="settings-link" data-view="settings-view">
+                <ion-icon name="settings-outline"></ion-icon>
+                <span class="nav-text">Settings</span>
+            </a>
+             <!-- Add more nav items as needed -->
+        </aside>
+
+        <main class="main-content">
+
+             <!-- DASHBOARD VIEW -->
+             <div id="dashboard-view" class="view-container active-view">
+                 <h1>Imports/Exports Dashboard</h1>
+                 <!-- Statistics Section -->
+                 <section class="section">
+                      <h2><ion-icon name="analytics-outline"></ion-icon>Overview</h2>
+                      <div id="statistics">
+                         <div id="total-income" class="stat-card">
+                             <h3>Total Income Value</h3> <p>₹0.00</p>
+                         </div>
+                         <div id="total-expenses" class="stat-card">
+                             <h3>Total Expense Value</h3> <p>₹0.00</p>
+                         </div>
+                         <div id="profit-loss" class="stat-card">
+                             <h3>Profit / Loss</h3> <p>₹0.00</p>
+                         </div>
+                         <div id="sold-value" class="stat-card">
+                             <h3>Value of Sold Stock</h3> <p>₹0.00</p>
+                         </div>
+                         <div id="unsold-value" class="stat-card">
+                             <h3>Value of Unsold Stock</h3> <p>₹0.00</p>
+                         </div>
+                         <div id="total-items" class="stat-card">
+                             <h3>Total Item Units</h3> <p>0</p>
+                         </div>
+                         <div id="total-sold-items" class="stat-card">
+                             <h3>Units Sold (Income)</h3> <p>0</p>
+                         </div>
+                     </div>
+                 </section>
+             </div>
+
+             <!-- ENTRIES VIEW -->
+             <div id="entries-view" class="view-container">
+                 <h1>Entries Management</h1>
+                  <!-- Entry Form Section -->
+                 <section class="section">
+                     <h2><ion-icon name="add-circle-outline"></ion-icon> Add New Entry</h2>
+                     <form id="entry-form">
+                         <div class="form-group">
+                             <label for="type">Type:</label>
+                             <select id="type" name="type" required>
+                                 <option value="Income">Income</option>
+                                 <option value="Expense">Expense</option>
+                             </select>
+                         </div>
+                         <div class="form-group">
+                             <label for="category-select">Category:</label>
+                             <select id="category-select" name="category" required>
+                                 <option value="" disabled selected>-- Select Category --</option>
+                                 <!-- Categories populated by JS -->
+                             </select>
+                         </div>
+                          <div class="form-group">
+                             <label for="itemName">Item Name:</label>
+                             <input type="text" id="itemName" name="itemName" required>
+                         </div>
+                         <div class="form-group">
+                             <label for="itemNumber">Item Number/SKU:</label>
+                             <input type="text" id="itemNumber" name="itemNumber" required>
+                         </div>
+                         <div class="form-group">
+                             <label for="amount">Amount (₹ per Item):</label>
+                             <input type="number" id="amount" name="amount" step="0.01" required min="0">
+                         </div>
+                         <div class="form-group">
+                             <label for="itemCount">Item Count:</label>
+                             <input type="number" id="itemCount" name="itemCount" required min="1" value="1">
+                         </div>
+                         <div class="form-group">
+                             <label for="date">Date:</label>
+                             <input type="date" id="date" name="date" required>
+                         </div>
+                         <div class="form-group form-group-full">
+                             <button type="submit"><ion-icon name="add-outline"></ion-icon> Add Entry</button>
+                         </div>
+                     </form>
+                 </section>
+
+                  <!-- Entries Table Section -->
+                 <section class="section">
+                     <h2><ion-icon name="list-outline"></ion-icon> All Entries</h2>
+                      <div class="table-container">
+                         <table id="entries-table">
+                             <thead>
+                                 <tr>
+                                     <th>Type</th>
+                                     <th>Category</th>
+                                     <th>Name</th>
+                                     <th>Item No.</th>
+                                     <th>Amount (Per Item)</th>
+                                     <th>Date</th>
+                                     <th>Total Count</th>
+                                     <th>Sold Count</th>
+                                     <th>Actions</th>
+                                 </tr>
+                             </thead>
+                             <tbody id="entries-body">
+                                 <tr><td colspan="9" style="text-align:center; padding: 30px; color: var(--text-muted);">Loading entries...</td></tr>
+                                 <!-- Entries populated by JS -->
+                             </tbody>
+                         </table>
+                     </div>
+                 </section>
+             </div>
+
+             <!-- SETTINGS VIEW -->
+             <div id="settings-view" class="view-container">
+                 <h1>Settings</h1>
+                 <!-- Category Management Section -->
+                 <section class="section">
+                     <h2><ion-icon name="pricetags-outline"></ion-icon> Manage Categories</h2>
+                     <div class="category-management-form">
+                         <div class="category-actions-group"> <!-- Add Group -->
+                             <div>
+                                 <label for="new-category">New Category Name:</label>
+                                 <input type="text" id="new-category" placeholder="e.g., Electronics">
+                              </div>
+                              <button type="button" id="add-category-btn"><ion-icon name="add-outline"></ion-icon> Add Category</button>
+                          </div>
+                          <hr style="border: none; border-top: 1px solid #eee; margin: 5px 0;"> <!-- Optional separator -->
+                          <div class="category-actions-group"> <!-- Remove Group -->
+                              <div>
+                                 <label for="category-to-remove">Select Category to Remove:</label>
+                                 <select id="category-to-remove" name="category-to-remove">
+                                      <option value="" disabled selected>-- Select Category --</option>
+                                      <!-- Populated by JS -->
+                                 </select>
+                              </div>
+                              <button type="button" id="remove-category-btn" class="danger"><ion-icon name="trash-outline"></ion-icon> Remove Selected</button>
+                          </div>
+                     </div>
+                 </section>
+                 <!-- Add other settings sections here if needed -->
+             </div>
+
+        </main>
+    </div>
+
+    <!-- Firebase -->
+    <script type="module">
+      // Import the functions you need from the SDKs
+      import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+      import { getDatabase, ref, set, push, onValue, remove, update } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+      // No Analytics needed for this core functionality unless desired
+      // import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-analytics.js";
+
+      // --- Firebase Configuration ---
+      // IMPORTANT: Replace with your actual config
+      const firebaseConfig = {
+        apiKey: "AIzaSyBBYR15f_gaji25sHx7rV9P4cse85L2-T8", // Replace
+        authDomain: "expanse-tracker-3ef68.firebaseapp.com", // Replace
+        projectId: "expanse-tracker-3ef68", // Replace
+        storageBucket: "expanse-tracker-3ef68.firebasestorage.app", // Replace
+        messagingSenderId: "823084325156", // Replace
+        appId: "1:823084325156:web:aa6e41981bc2e894fe7bb1", // Replace
+        measurementId: "G-YY5WXLWC8C", // Replace
+        databaseURL: "https://expanse-tracker-3ef68-default-rtdb.firebaseio.com" // Add your Realtime Database URL
+      };
+
+      // --- Initialize Firebase ---
+      const app = initializeApp(firebaseConfig);
+      const db = getDatabase(app);
+      // const analytics = getAnalytics(app); // Uncomment if you need analytics
+
+      // --- Database References ---
+      const dbItemsRef = ref(db, 'expanses/items');
+      const dbCategoriesRef = ref(db, 'expanses/categories');
+
+      // --- DOM Elements ---
+        // Views
+        const dashboardView = document.getElementById('dashboard-view');
+        const entriesView = document.getElementById('entries-view');
+        const settingsView = document.getElementById('settings-view');
+        const viewContainers = document.querySelectorAll('.view-container');
+        // Sidebar Links
+        const sidebarLinks = document.querySelectorAll('.sidebar .nav-item');
+        // Forms & Controls
+        const entryForm = document.getElementById('entry-form');
+        const entriesBody = document.getElementById('entries-body');
+        const statsTotalIncome = document.querySelector('#total-income p');
+        const statsTotalExpenses = document.querySelector('#total-expenses p');
+        const statsProfitLoss = document.querySelector('#profit-loss p');
+        const statsSoldValue = document.querySelector('#sold-value p');
+        const statsUnsoldValue = document.querySelector('#unsold-value p');
+        const statsTotalItems = document.querySelector('#total-items p');
+        const statsTotalSoldItems = document.querySelector('#total-sold-items p');
+        const typeSelect = document.getElementById('type');
+        const categorySelect = document.getElementById('category-select');
+        const itemNameInput = document.getElementById('itemName');
+        const itemNumberInput = document.getElementById('itemNumber');
+        const amountInput = document.getElementById('amount');
+        const itemCountInput = document.getElementById('itemCount');
+        const dateInput = document.getElementById('date');
+        const newCategoryInput = document.getElementById('new-category');
+        const addCategoryBtn = document.getElementById('add-category-btn');
+        const categoryToRemoveSelect = document.getElementById('category-to-remove');
+        const removeCategoryBtn = document.getElementById('remove-category-btn');
+
+
+      // --- State (Mirrored from Firebase) ---
+      let localItems = {}; // Use object to store items by Firebase key
+      let localCategories = {}; // Use object for categories by Firebase key
+
+      // --- Constants ---
+      const CURRENCY_FORMAT = 'en-IN';
+      const CURRENCY_SYMBOL = 'INR';
+
+      // --- Utility Functions ---
+      const formatCurrency = (amount) => {
+          return amount.toLocaleString(CURRENCY_FORMAT, { style: 'currency', currency: CURRENCY_SYMBOL, minimumFractionDigits: 2, maximumFractionDigits: 2 });
+      };
+
+      // --- Navigation Logic ---
+      const switchView = (viewId) => {
+          // Hide all views
+          viewContainers.forEach(container => container.classList.remove('active-view'));
+          // Deactivate all links
+          sidebarLinks.forEach(link => link.classList.remove('active'));
+
+          // Show the target view
+          const targetView = document.getElementById(viewId);
+          if (targetView) {
+              targetView.classList.add('active-view');
+          }
+
+          // Activate the corresponding link
+          const targetLink = document.querySelector(`.nav-item[data-view="${viewId}"]`);
+          if (targetLink) {
+              targetLink.classList.add('active');
+          }
+      };
+
+      // --- Category Management Functions (Firebase) ---
+       const populateCategorySelects = () => {
+            const currentCategoryValue = categorySelect.value; // Store current selection
+            const currentRemoveValue = categoryToRemoveSelect.value; // Store current selection
+
+            categorySelect.innerHTML = '<option value="" disabled selected>-- Select Category --</option>';
+            categoryToRemoveSelect.innerHTML = '<option value="" disabled selected>-- Select Category --</option>';
+
+            const sortedCategories = Object.entries(localCategories)
+                                         .map(([key, value]) => ({ key, name: value.name }))
+                                         .sort((a, b) => a.name.localeCompare(b.name));
+
+            if (sortedCategories.length === 0) {
+                categorySelect.innerHTML = '<option value="" disabled>No categories defined</option>';
+                categorySelect.disabled = true; // Disable select if no categories
+                categoryToRemoveSelect.innerHTML = '<option value="" disabled>No categories</option>';
+                categoryToRemoveSelect.disabled = true;
+                removeCategoryBtn.disabled = true; // Disable remove btn if no categories
+            } else {
+                categorySelect.disabled = false;
+                categoryToRemoveSelect.disabled = false;
+                removeCategoryBtn.disabled = false;
+
+                sortedCategories.forEach(cat => {
+                    const option = document.createElement('option');
+                    option.value = cat.name; // Use name as value for simplicity here
+                    option.textContent = cat.name;
+                    option.dataset.key = cat.key; // Store Firebase key on the option in remove select
+
+                    categorySelect.appendChild(option.cloneNode(true));
+                    categoryToRemoveSelect.appendChild(option);
+                });
+
+                // Try to restore previous selection
+                categorySelect.value = currentCategoryValue;
+                 if (categorySelect.selectedIndex === -1 || categorySelect.value === "") {
+                     categorySelect.selectedIndex = 0; // Reset to placeholder if value not found
+                 }
+                categoryToRemoveSelect.value = currentRemoveValue;
+                if (categoryToRemoveSelect.selectedIndex === -1 || categoryToRemoveSelect.value === "") {
+                    categoryToRemoveSelect.selectedIndex = 0; // Reset to placeholder if value not found
+                }
+
+                // Re-check remove button state based on selection
+                removeCategoryBtn.disabled = !categoryToRemoveSelect.value;
+
+            }
+       };
+
+        const addCategory = async () => {
+            const newCatName = newCategoryInput.value.trim();
+            if (!newCatName) {
+                alert('Please enter a category name.');
+                return;
+            }
+            const exists = Object.values(localCategories).some(cat => cat.name.toLowerCase() === newCatName.toLowerCase());
+            if (exists) {
+                 alert(`Category "${newCatName}" already exists.`);
+                 newCategoryInput.focus(); // Focus back for correction
+                 return;
+            }
+
+            addCategoryBtn.disabled = true;
+            try {
+                await push(dbCategoriesRef, { name: newCatName });
+                newCategoryInput.value = ''; // Clear input on success
+                // onValue listener handles UI update
+            } catch (error) {
+                console.error("Error adding category: ", error);
+                alert("Failed to add category. See console for details.");
+            } finally {
+                 addCategoryBtn.disabled = false;
+            }
+        };
+
+        const removeCategory = async () => {
+            const selectedOption = categoryToRemoveSelect.options[categoryToRemoveSelect.selectedIndex];
+            const catNameToRemove = selectedOption.value;
+            const catKeyToRemove = selectedOption.dataset.key; // Get Firebase key
+
+            if (!catKeyToRemove || !catNameToRemove) { // Check both key and value
+                alert('Please select a category to remove.');
+                return;
+            }
+
+             const isUsed = Object.values(localItems).some(item => item.category === catNameToRemove);
+             if (isUsed) {
+                 alert(`Cannot remove category "${catNameToRemove}" as it is currently assigned to one or more items. Please reassign or remove the items first.`);
+                 return;
+             }
+
+            if (confirm(`Are you sure you want to permanently remove the category "${catNameToRemove}"? This cannot be undone.`)) {
+                removeCategoryBtn.disabled = true; // Disable while processing
+                categoryToRemoveSelect.disabled = true; // Disable select during removal
+                try {
+                    await remove(ref(db, `expanses/categories/${catKeyToRemove}`));
+                    // onValue listener handles UI update, including selects and button state
+                } catch (error) {
+                     console.error("Error removing category: ", error);
+                     alert("Failed to remove category. See console for details.");
+                     // Re-enable controls on error (will be re-enabled by onValue on success)
+                     removeCategoryBtn.disabled = !categoryToRemoveSelect.value;
+                     categoryToRemoveSelect.disabled = (Object.keys(localCategories).length === 0);
+                }
+            }
+        };
+
+        // --- Item Management Functions (Firebase) ---
+        const addItem = async (event) => {
+             event.preventDefault();
+             const submitButton = entryForm.querySelector('button[type="submit"]');
+
+             const type = typeSelect.value;
+             const category = categorySelect.value;
+             const itemName = itemNameInput.value.trim();
+             const itemNumber = itemNumberInput.value.trim();
+             const amount = parseFloat(amountInput.value);
+             const itemCount = parseInt(itemCountInput.value, 10);
+             const date = dateInput.value;
+
+             // Enhanced validation message
+             let errors = [];
+             if (!category) errors.push("Category is required.");
+             if (!itemName) errors.push("Item Name is required.");
+             if (!itemNumber) errors.push("Item Number/SKU is required.");
+             if (isNaN(amount) || amount < 0) errors.push("Amount must be a valid number (0 or greater).");
+             if (isNaN(itemCount) || itemCount < 1) errors.push("Item Count must be a whole number (1 or greater).");
+             if (!date) errors.push("Date is required.");
+
+             if (errors.length > 0) {
+                 alert("Please fix the following errors:\n- " + errors.join("\n- "));
+                 return;
+             }
+
+             const newItemData = {
+                 type: type,
+                 category: category,
+                 itemName: itemName,
+                 itemNumber: itemNumber,
+                 amount: amount,
+                 date: date,
+                 itemCount: itemCount,
+                 soldCount: 0 // Always initialize soldCount to 0
+             };
+
+             submitButton.disabled = true;
+             try {
+                 await push(dbItemsRef, newItemData);
+                 entryForm.reset();
+                 dateInput.valueAsDate = new Date(); // Reset date to today
+                 itemCountInput.value = 1; // Reset item count to 1
+                 if (categorySelect.options.length > 0 && !categorySelect.disabled) categorySelect.selectedIndex = 0; // Reset category select
+                 // UI update handled by onValue listener
+             } catch (error) {
+                 console.error("Error adding item: ", error);
+                 alert("Failed to add item. See console for details.");
+             } finally {
+                  submitButton.disabled = false;
+             }
+        };
+
+        const updateItemCount = async (itemId, change) => {
+            if (!localItems[itemId]) return;
+
+            const currentItem = localItems[itemId];
+            const newCount = currentItem.itemCount + change;
+
+            if (newCount >= currentItem.soldCount && newCount >= 1) {
+                try {
+                    // Disable buttons briefly to prevent spamming
+                    const incBtn = entriesBody.querySelector(`button.increment-count-btn[data-id="${itemId}"]`);
+                    const decBtn = entriesBody.querySelector(`button.decrement-count-btn[data-id="${itemId}"]`);
+                    if(incBtn) incBtn.disabled = true;
+                    if(decBtn) decBtn.disabled = true;
+
+                    await update(ref(db, `expanses/items/${itemId}`), { itemCount: newCount });
+                    // UI update handled by onValue, which will re-enable buttons implicitly by re-rendering
+                } catch (error) {
+                    console.error("Error updating item count:", error);
+                    alert("Failed to update item count.");
+                    // Re-enable buttons if error occurs
+                    const incBtn = entriesBody.querySelector(`button.increment-count-btn[data-id="${itemId}"]`);
+                    const decBtn = entriesBody.querySelector(`button.decrement-count-btn[data-id="${itemId}"]`);
+                    if(incBtn) incBtn.disabled = false;
+                    if(decBtn) decBtn.disabled = false;
+                }
+            } else if (newCount < 1) {
+                 alert("Item count cannot be less than 1.");
+            } else {
+                 alert(`Item count cannot be less than the number already sold (${currentItem.soldCount}).`);
+            }
+        };
+
+        const updateSoldCount = async (itemId, inputElement) => {
+             if (!localItems[itemId] || localItems[itemId].type !== 'Income') return;
+
+             const currentItem = localItems[itemId];
+             let newSoldCount = parseInt(inputElement.value, 10);
+
+             // --- Validation ---
+             if (isNaN(newSoldCount) || newSoldCount < 0) {
+                 alert("Sold count must be a non-negative number.");
+                 newSoldCount = currentItem.soldCount; // Prepare to reset
+             } else if (newSoldCount > currentItem.itemCount) {
+                 alert(`Sold count (${newSoldCount}) cannot exceed the total item count (${currentItem.itemCount}).`);
+                 newSoldCount = currentItem.itemCount; // Cap at max possible
+             }
+
+             // Always reset the input value visually immediately after validation/correction
+             inputElement.value = newSoldCount;
+
+             // Avoid unnecessary DB write if value didn't actually change or was invalid
+             if (newSoldCount === currentItem.soldCount) {
+                 return;
+             }
+
+             // --- Update Firebase ---
+             inputElement.disabled = true; // Disable during update
+             try {
+                 await update(ref(db, `expanses/items/${itemId}`), { soldCount: newSoldCount });
+                 // UI update handled by onValue listener
+             } catch (error) {
+                 console.error("Error updating sold count:", error);
+                 alert("Failed to update sold count.");
+                 inputElement.value = currentItem.soldCount; // Reset visually on error
+             } finally {
+                  inputElement.disabled = false; // Re-enable (onValue will also redraw)
+             }
+        };
+
+        const removeItem = async (itemId) => {
+            if (!localItems[itemId]) return;
+            const item = localItems[itemId];
+
+            if (confirm(`Are you sure you want to remove item "${item.itemName || 'N/A'}" (SKU: ${item.itemNumber || 'N/A'})? This cannot be undone.`)) {
+                 try {
+                      const removeBtn = entriesBody.querySelector(`button.remove-btn[data-id="${itemId}"]`);
+                      if(removeBtn) removeBtn.disabled = true; // Disable button
+
+                     await remove(ref(db, `expanses/items/${itemId}`));
+                      // UI update handled by onValue
+                 } catch (error) {
+                      console.error("Error removing item:", error);
+                      alert("Failed to remove item.");
+                      const removeBtn = entriesBody.querySelector(`button.remove-btn[data-id="${itemId}"]`);
+                      if(removeBtn) removeBtn.disabled = false; // Re-enable on error
+                 }
+            }
+        };
+
+        // --- Rendering Functions (Update based on localItems/localCategories) ---
+        const renderTable = () => {
+            entriesBody.innerHTML = ''; // Clear existing table rows
+
+            const itemsArray = Object.entries(localItems)
+                                    .map(([key, value]) => ({ id: key, ...value }))
+                                    .sort((a, b) => new Date(b.date) - new Date(a.date)); // Sort by date descending
+
+            if (itemsArray.length === 0) {
+                entriesBody.innerHTML = '<tr><td colspan="9" style="text-align:center; padding: 30px; color: var(--text-muted);">No entries yet. Add one using the form above.</td></tr>';
+                return;
+            }
+
+            itemsArray.forEach(item => {
+                const row = document.createElement('tr');
+                const isIncome = item.type === 'Income';
+                row.classList.add(isIncome ? 'income-row' : 'expense-row');
+
+                // Ensure numeric values, default to 0 if not present or invalid
+                const amountPerItem = typeof item.amount === 'number' ? item.amount : 0;
+                const itemCountVal = typeof item.itemCount === 'number' ? item.itemCount : 0;
+                const soldCountVal = typeof item.soldCount === 'number' ? item.soldCount : 0;
+                const canDecrement = itemCountVal > 1 && itemCountVal > soldCountVal;
+                const isSoldOut = isIncome && itemCountVal === soldCountVal;
+
+
+                row.innerHTML = `
+                    <td>${item.type}</td>
+                    <td>${item.category || '<i style="color:var(--text-muted)">N/A</i>'}</td>
+                    <td>${item.itemName || '<i style="color:var(--text-muted)">N/A</i>'}</td>
+                    <td>${item.itemNumber || '<i style="color:var(--text-muted)">N/A</i>'}</td>
+                    <td>${formatCurrency(amountPerItem)}</td>
+                    <td>${item.date}</td>
+                    <td class="count-controls">
+                        <button class="small secondary decrement-count-btn" data-id="${item.id}" title="Decrease Count" ${!canDecrement ? 'disabled' : ''}>
+                            <ion-icon name="remove-outline"></ion-icon>
+                        </button>
+                        <span>${itemCountVal}</span>
+                        <button class="small secondary increment-count-btn" data-id="${item.id}" title="Increase Count">
+                            <ion-icon name="add-outline"></ion-icon>
+                        </button>
+                    </td>
+                    <td class="sold-controls">
+                         ${isIncome ? `
+                         <input type="number"
+                                class="sold-count-input"
+                                data-id="${item.id}"
+                                value="${soldCountVal}"
+                                min="0"
+                                max="${itemCountVal}"
+                                title="Enter number sold (0-${itemCountVal})${isSoldOut ? ' - SOLD OUT' : ''}"
+                                aria-label="Sold Count"
+                                ${itemCountVal === 0 ? 'disabled' : ''}> <!-- Disable if count is 0 -->
+                         ` : '<span class="na-text">N/A</span>'}
+                    </td>
+                    <td class="action-buttons">
+                        <button class="small danger remove-btn" data-id="${item.id}" title="Remove Item">
+                            <ion-icon name="trash-outline"></ion-icon>
+                        </button>
+                    </td>
+                `;
+                entriesBody.appendChild(row);
+            });
+        };
+
+        const renderStatistics = () => {
+            let totalIncomeValue = 0, totalExpenseValue = 0, totalSoldValue = 0;
+            let totalUnsoldValue = 0, totalItemUnits = 0, totalSoldUnits = 0;
+
+            Object.values(localItems).forEach(item => {
+                const amount = typeof item.amount === 'number' ? item.amount : 0;
+                const itemCount = typeof item.itemCount === 'number' ? item.itemCount : 0;
+                const soldCount = typeof item.soldCount === 'number' ? item.soldCount : 0;
+
+                const itemTotalValue = amount * itemCount;
+                totalItemUnits += itemCount;
+
+                if (item.type === 'Income') {
+                    const itemSoldValue = amount * soldCount;
+                    const itemUnsoldValue = amount * (itemCount - soldCount);
+
+                    totalIncomeValue += itemTotalValue; // Income VALUE is based on total potential if sold
+                    totalSoldValue += itemSoldValue;
+                    totalUnsoldValue += itemUnsoldValue;
+                    totalSoldUnits += soldCount;
+                } else { // Expense
+                    totalExpenseValue += itemTotalValue;
+                }
+            });
+
+            // Profit/Loss calculated as Value of Sold Stock - Total Expense Value
+            const profitLoss = totalSoldValue - totalExpenseValue;
+
+            statsTotalIncome.textContent = formatCurrency(totalIncomeValue);
+            statsTotalExpenses.textContent = formatCurrency(totalExpenseValue);
+            statsProfitLoss.textContent = formatCurrency(profitLoss);
+            statsSoldValue.textContent = formatCurrency(totalSoldValue);
+            statsUnsoldValue.textContent = formatCurrency(totalUnsoldValue);
+            statsTotalItems.textContent = totalItemUnits.toLocaleString('en-IN');
+            statsTotalSoldItems.textContent = totalSoldUnits.toLocaleString('en-IN');
+
+             const profitLossElement = statsProfitLoss.closest('.stat-card');
+             profitLossElement.style.borderColor = 'var(--border-color)'; // Reset border
+             statsProfitLoss.style.color = 'var(--text-color)'; // Reset color
+             if (profitLoss > 0) {
+                 statsProfitLoss.style.color = 'var(--green-color)';
+                 profitLossElement.style.borderColor = 'rgba(16, 124, 16, 0.3)'; // Subtle green border
+             } else if (profitLoss < 0) {
+                 statsProfitLoss.style.color = 'var(--red-color)';
+                 profitLossElement.style.borderColor = 'rgba(216, 59, 1, 0.3)'; // Subtle red border
+             }
+        };
+
+        // --- Event Listeners Setup ---
+        const setupEventListeners = () => {
+            // Navigation Listener
+            sidebarLinks.forEach(link => {
+                link.addEventListener('click', (event) => {
+                    event.preventDefault();
+                    const viewId = link.dataset.view;
+                    if (viewId) {
+                        switchView(viewId);
+                    }
+                });
+            });
+
+            // Form/Button Listeners
+            entryForm.addEventListener('submit', addItem);
+            addCategoryBtn.addEventListener('click', addCategory);
+            removeCategoryBtn.addEventListener('click', removeCategory);
+
+            // Enable/Disable remove category button based on selection
+            categoryToRemoveSelect.addEventListener('change', () => {
+                 removeCategoryBtn.disabled = !categoryToRemoveSelect.value;
+            });
+
+
+            // Event delegation for table actions
+            entriesBody.addEventListener('click', (event) => {
+                const button = event.target.closest('button[data-id]'); // Target buttons with data-id
+                if (!button) return;
+
+                const id = button.dataset.id;
+
+                if (button.classList.contains('remove-btn')) removeItem(id);
+                else if (button.classList.contains('increment-count-btn')) updateItemCount(id, 1);
+                else if (button.classList.contains('decrement-count-btn')) updateItemCount(id, -1);
+            });
+
+             // Listener for sold count input changes (using 'change' which fires on blur or Enter)
+             entriesBody.addEventListener('change', (event) => {
+                 const input = event.target;
+                 if (input.classList.contains('sold-count-input') && input.dataset.id) {
+                      updateSoldCount(input.dataset.id, input);
+                 }
+             });
+             // Optional: Add listener for Enter key press on sold count input for immediate update
+             entriesBody.addEventListener('keypress', (event) => {
+                  if (event.key === 'Enter') {
+                     const input = event.target;
+                     if (input.classList.contains('sold-count-input') && input.dataset.id) {
+                          updateSoldCount(input.dataset.id, input);
+                          input.blur(); // Remove focus after enter
+                     }
+                 }
+             });
+
+        };
+
+      // --- Firebase Realtime Listeners ---
+      const listenForItems = () => {
+          onValue(dbItemsRef, (snapshot) => {
+              localItems = snapshot.val() || {}; // Update local state
+              renderTable();
+              renderStatistics();
+              // Re-populate categories in case item removal affects category usage check
+               populateCategorySelects();
+          }, (error) => {
+              console.error("Firebase item listener error: ", error);
+              entriesBody.innerHTML = '<tr><td colspan="9" style="text-align:center; color: var(--red-color); padding: 20px;">Error loading data. Check console and Firebase connection.</td></tr>';
+          });
+      };
+
+      const listenForCategories = () => {
+          onValue(dbCategoriesRef, (snapshot) => {
+               localCategories = snapshot.val() || {}; // Update local state
+               populateCategorySelects();
+               // No need to re-render table here unless category names displayed might change dynamically
+               // Render stats in case future stats depend on category counts etc.
+               renderStatistics();
+          }, (error) => {
+               console.error("Firebase category listener error: ", error);
+               alert("Error loading categories. Check console.");
+               // Disable category features if loading fails
+               categorySelect.disabled = true;
+               categoryToRemoveSelect.disabled = true;
+               addCategoryBtn.disabled = true;
+               removeCategoryBtn.disabled = true;
+          });
+      };
+
+
+      // --- Initialization ---
+      const initializeAppLogic = () => {
+          dateInput.valueAsDate = new Date(); // Set default date
+          itemCountInput.value = 1;
+          switchView('dashboard-view'); // Set initial view
+          setupEventListeners();
+          // Start listening AFTER initial setup
+          listenForItems();
+          listenForCategories();
+      };
+
+      initializeAppLogic(); // Run initialization
+
+    </script>
+
+</body>
+</html>
